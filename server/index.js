@@ -3,9 +3,10 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv').config();
 const authController = require('./controllers/authController');
 const propertyController = require('./controllers/propertyController');
+const uploadController = require("./controllers/uploadController");
+
 
 const cors = require('cors');
-const uploadController = require('./controllers/uploadController');
 
 // Initialize express app
 const app = express();
@@ -37,7 +38,15 @@ mongoose.connect(process.env.MONGO_URL, {
 // Routes
 app.use("/auth", authController); // Register routes for authentication
 app.use("/Property", propertyController); // Register property routes
-app.use("upload", uploadController);
+app.use('/api/property', propertyController);
+app.use("/api/user", uploadController);
+
+
+const path = require('path');
+app.use("/images", express.static(path.join(__dirname, "public/images")));
+
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Start the server after setting up routes and middlewares
 app.listen(process.env.PORT || 5000, () => {

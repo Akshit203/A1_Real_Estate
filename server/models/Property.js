@@ -13,7 +13,7 @@ const PropertySchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  image: { 
+  images: { 
     type: [String],
     required: true
   },
@@ -59,7 +59,7 @@ const PropertySchema = new mongoose.Schema({
       ref: "User" 
     }
   ],
-  createdBy: {
+  currentOwner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true

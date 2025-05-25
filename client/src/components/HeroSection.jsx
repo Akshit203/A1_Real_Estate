@@ -1,8 +1,11 @@
 import React from "react";
+import Properties from "./Properties";
 
 
 const HeroSection = () => {
   return (
+    <>
+    
       <div className="text-center py-20 bg-gradient-to-b from-blue-50 to-blue-100 mt-20">
    
         
@@ -22,6 +25,10 @@ const HeroSection = () => {
         </p>
       
     </div>
+    <Properties/>
+        </>
+
+
   );
 };
 

@@ -94,7 +94,7 @@ const Register = () => {
               value={userSignUp.name}
               onChange={(e) => setUserSignUp({ ...userSignUp, name: e.target.value })}
               className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg w-full p-2.5"
-              placeholder="John Doe"
+              placeholder="Name"
             />
           </div>
 
@@ -108,7 +108,7 @@ const Register = () => {
               value={userSignUp.email}
               onChange={(e) => setUserSignUp({ ...userSignUp, email: e.target.value })}
               className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg w-full p-2.5"
-              placeholder="name@company.com"
+              placeholder="name@example.com"
             />
           </div>
 

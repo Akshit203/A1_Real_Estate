@@ -15,6 +15,7 @@ const verifyToken = async (req, res, next) => {
       if (err) {
         return res.status(403).json({ msg: 'Wrong or expired token' }); // Invalid token
       } else {
+        console.log('Decoded token data:', data);
         req.user = data; // Attach user data to the request object (user's id)
         next(); // Proceed to the next middleware or route handler
       }

@@ -1,44 +1,42 @@
-// src/pages/SignIn.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast'; 
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { loginUser } from "../redux/authSlice";
 
 const SignIn = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const { currentUser, loading, error } = useSelector((state) => state.auth);
+
   const [userSignIn, setUserSignIn] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
 
-  const userSignInFunction = async (e) => {
-    e.preventDefault();
+  // Redirect if already logged in
+  useEffect(() => {
+    if (currentUser) {
+      toast.success("Login Successful");
+      navigate("/dashboard");
+    }
+  }, [currentUser, navigate]);
 
-    if (userSignIn.email === '' || userSignIn.password === '') {
-      toast.error('All fields are required');
+  // Show error toast on login failure
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (userSignIn.email === "" || userSignIn.password === "") {
+      toast.error("All fields are required");
       return;
     }
-
-    try {
-      // Replace this with your actual login API call
-      const response = await fetch('/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userSignIn),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success('Login Successful');
-        navigate('/dashboard');  // Redirect to dashboard
-      } else {
-        toast.error('Login failed. Please check your credentials');
-      }
-    } catch (error) {
-      toast.error('Something went wrong. Please try again');
-    }
+    dispatch(loginUser(userSignIn));
   };
 
   return (
@@ -49,7 +47,7 @@ const SignIn = () => {
             <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
               Sign in to your account
             </h1>
-            <form className="space-y-4 md:space-y-6" onSubmit={userSignInFunction}>
+            <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label
                   htmlFor="email"
@@ -66,7 +64,7 @@ const SignIn = () => {
                     setUserSignIn({ ...userSignIn, email: e.target.value })
                   }
                   className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  placeholder="name@company.com"
+                  placeholder="name@example.com"
                   required
                 />
               </div>
@@ -94,16 +92,20 @@ const SignIn = () => {
 
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full text-white bg-blue-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
               >
-                Sign In
+                {loading ? "Logging in..." : "Sign In"}
               </button>
 
               <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                 Don't have an account?{" "}
-              <Link to="/register" className="font-medium text-blue-600 hover:underline">
-                    Sign up
-              </Link>
+                <Link
+                  to="/register"
+                  className="font-medium text-blue-600 hover:underline"
+                >
+                  Sign up
+                </Link>
               </p>
             </form>
           </div>
