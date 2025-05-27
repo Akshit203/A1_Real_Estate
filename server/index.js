@@ -37,9 +37,11 @@ mongoose.connect(process.env.MONGO_URL, {
 
 // Routes
 app.use("/auth", authController); // Register routes for authentication
-app.use("/Property", propertyController); // Register property routes
 app.use('/api/property', propertyController);
 app.use("/api/user", uploadController);
+app.use('/api/contact', propertyController);
+
+
 
 
 const path = require('path');

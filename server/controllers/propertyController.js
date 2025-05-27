@@ -5,8 +5,55 @@ const multer = require('multer');
 const verifyToken = require('../middlewares/verifyToken');
 const Property = require('../models/Property');
 const User = require('../models/User');
+const mongoose = require('mongoose');
+
+require("dotenv").config();
+
+const nodemailer = require("nodemailer");
+
 
 const propertyController = express.Router();
+
+// Inside propertyController (below other routes)
+propertyController.post('/send-mail', async (req, res) => {
+  const { sellerEmail, name, email, message } = req.body;
+
+  if (!sellerEmail || !name || !email || !message) {
+    return res.status(400).json({ message: "Missing required fields." });
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.MAIL_USER,  // aapka Gmail account
+      pass: process.env.MAIL_PASS,  // Gmail app password
+    },
+  });
+
+  const mailOptions = {
+    from: `RealEstate App <${process.env.MAIL_USER}>`,
+    to: sellerEmail,  // Fixed email jo frontend se aa rahi hai
+    subject: `New Inquiry from RealEstate App`,
+    text: `You have a new message:
+
+Name: ${name}
+Email: ${email}
+Message: ${message}`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: "Email sent successfully." });
+  } catch (error) {
+    console.error("Email sending failed:", error);
+    res.status(500).json({ message: "Failed to send email." });
+  }
+});
+
+
+
+
+
 
 // Ensure uploads folder exists - create if missing
 const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -80,12 +127,11 @@ propertyController.get('/find/types', async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 });
-
-// GET properties owned by logged-in user
 propertyController.get('/find/my-properties', verifyToken, async (req, res) => {
   console.log('Logged in user ID:', req.user.id);
   try {
-    const properties = await Property.find({ currentOwner: req.user.id });
+    const properties = await Property.find({ currentOwner: req.user.id })
+      .populate('currentOwner', 'email name'); // populate owner's email and name only
     console.log('Properties found:', properties.length);
     return res.status(200).json(properties);
   } catch (error) {
@@ -93,6 +139,20 @@ propertyController.get('/find/my-properties', verifyToken, async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 });
+
+
+// // GET properties owned by logged-in user
+// propertyController.get('/find/my-properties', verifyToken, async (req, res) => {
+//   console.log('Logged in user ID:', req.user.id);
+//   try {
+//     const properties = await Property.find({ currentOwner: req.user.id });
+//     console.log('Properties found:', properties.length);
+//     return res.status(200).json(properties);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: error.message });
+//   }
+// });
 
 
 
@@ -186,28 +246,56 @@ propertyController.put('/:id', verifyToken, async (req, res) => {
   }
 });
 
-// PUT bookmark/unbookmark property
 propertyController.put('/bookmark/:id', verifyToken, async (req, res) => {
   try {
-    const property = await Property.findById(req.params.id);
-    if (!property) return res.status(404).json({ message: 'Property not found' });
+    console.log("User ID from token:", req.user.id);
+    console.log("Property ID param:", req.params.id);
 
-    if (property.currentOwner.toString() === req.user.id) {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log("Invalid property ID");
+      return res.status(400).json({ message: "Invalid property ID" });
+    }
+
+    const property = await Property.findById(req.params.id);
+    console.log("Fetched property:", property);
+
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
+
+    if (!req.user || !req.user.id) {
+      return res.status(403).json({ message: "Invalid user" });
+    }
+
+    const userIdStr = req.user.id.toString();
+
+    if (!property.currentOwner) {
+      console.log("Property has no currentOwner");
+      return res.status(500).json({ message: "Property owner not set" });
+    }
+
+    if (property.currentOwner.toString() === userIdStr) {
       return res.status(403).json({ message: "You are not allowed to bookmark your own property" });
     }
 
-    if (property.bookmarkedUsers.includes(req.user.id)) {
-      property.bookmarkedUsers = property.bookmarkedUsers.filter(id => id !== req.user.id);
+    const isBookmarked = property.bookmarkedUsers.some(id => id.toString() === userIdStr);
+
+    if (isBookmarked) {
+      property.bookmarkedUsers = property.bookmarkedUsers.filter(id => id.toString() !== userIdStr);
     } else {
-      property.bookmarkedUsers.push(req.user.id);
+      property.bookmarkedUsers.push(mongoose.Types.ObjectId(userIdStr));
     }
+
     await property.save();
 
-    return res.status(200).json(property);
+    return res.status(200).json({ message: `Property ${isBookmarked ? 'unbookmarked' : 'bookmarked'} successfully`, property });
   } catch (error) {
+    console.error("Error in bookmark toggle:", error);
     return res.status(500).json({ message: error.message });
   }
 });
+
+
 
 // DELETE property by ID
 propertyController.delete('/:id', verifyToken, async (req, res) => {

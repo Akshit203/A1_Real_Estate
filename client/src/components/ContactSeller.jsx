@@ -1,6 +1,7 @@
 import { useState } from "react";
+import axios from "axios";
 
-const ContactSeller = ({ property, onClose }) => {
+const ContactSeller = ({ onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -14,13 +15,22 @@ const ContactSeller = ({ property, onClose }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you can handle form submission, e.g., send data to server
-    alert(
-      `Message sent to seller of ${property.title}:\nName: ${formData.name}\nEmail: ${formData.email}\nMessage: ${formData.message}`
-    );
-    onClose(); // close form after submit
+
+    try {
+      await axios.post("http://localhost:5000/api/contact/send-mail", {
+        sellerEmail: "akshitgupta10032003.ak@gmail.com", // fixed recipient email
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+      });
+      alert("Message sent successfully!");
+      onClose();
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      alert("Failed to send message. Please try again later.");
+    }
   };
 
   return (
