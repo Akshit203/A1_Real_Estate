@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   server:
     build: ./server
@@ -7,13 +9,12 @@ services:
     environment:
       - MONGO_URI=mongodb+srv://akshit2003:RLSpSZ7u2KGy2eeo@realestatecluster.1cf4khp.mongodb.net/realestate?retryWrites=true&w=majority&appName=RealEstateCluster
       - PORT=5000
+      - NODE_ENV=production
 
   client:
     build: ./client
     container_name: realestate_client
     ports:
-      - "3000:3000"
-    stdin_open: true
-    tty: true
+      - "3000:80"
     depends_on:
       - server

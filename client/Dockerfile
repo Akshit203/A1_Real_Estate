@@ -1,12 +1,24 @@
-FROM node:22.15.0
+# Build stage
+FROM node:22 AS builder
 
 WORKDIR /app
 
+# Copy package.json and install dependencies
 COPY package*.json ./
 RUN npm install
 
+# Copy source code and build
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
+# Production stage with Nginx
+FROM nginx:alpine
 
-CMD ["npm", "run", "dev", "--", "--host"]
+# Copy build files to Nginx html folder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Expose port
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,17 +1,23 @@
+# Base image
 FROM node:18
 
-# set working directory
+# Set working directory
 WORKDIR /app
 
-# copy package.json and install dependencies
+# Copy package.json and package-lock.json
 COPY package*.json ./
-RUN npm install
 
-# copy rest of the code
+# Install dependencies (production only)
+RUN npm install --production
+
+# Copy all source files
 COPY . .
 
-# expose backend port (example: 5000)
+# Expose port
 EXPOSE 5000
 
-# start server
-CMD ["npm", "start"]
+# Set environment variable for production
+ENV NODE_ENV=production
+
+# Start the server
+CMD ["node", "index.js"]
